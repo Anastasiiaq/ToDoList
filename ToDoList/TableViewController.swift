@@ -34,8 +34,7 @@ class TableViewController: UITableViewController {
 	}
 	
 	private func saveTask (withTitle title: String) {
-		let appDelegate = UIApplication.shared.delegate as! AppDelegate
-		let context = appDelegate.persistentContainer.viewContext
+		let context = getContext()
 		
 		guard let entity = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
 		
@@ -44,20 +43,50 @@ class TableViewController: UITableViewController {
 		
 		do {
 			try context.save()
+			tasks.append(taskObject)				/* add to the end of the list */
+//			tasks.insert(taskObject, at: 0)			/* add to the start of the list */
 		} catch let error as NSError {
 			print(error.localizedDescription)
 		}
 		
 	}
 	
+	private func getContext() -> NSManagedObjectContext {
+		let appDelegate = UIApplication.shared.delegate as! AppDelegate
+		return appDelegate.persistentContainer.viewContext
+	}
+	
+	override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+		
+		let context = getContext()
+		let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
+		
+		do {
+			tasks = try context.fetch(fetchRequest)
+		} catch let error as NSError {
+			print(error.localizedDescription)
+		}
+	}
+	
 	override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+		
+//		let context = getContext()
+//		let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
+//
+//		if let tasks = try? context.fetch(fetchRequest) {
+//			for task in tasks {
+//				context.delete(task)
+//			}
+//		}
+//
+//		do {
+//			try context.save()
+//		} catch let error as NSError {
+//			print(error.localizedDescription)
+//		}
+		
     }
 
     // MARK: - Table view data source
@@ -76,7 +105,7 @@ class TableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
 
-		let task = tasks[indexPath.row]
+		let task = tasks[tasks.count - 1 - indexPath.row]	/* output the list in reverse order */
 		cell.textLabel?.text = task.title
 
         return cell
